@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import os
-import re
-import urllib3
-import certifi
 
 from argparse import ArgumentParser
+
+from utils import reformat_from_file, get_online_list, get_file_data
 
 
 PAC_RULE_FMT = '"{}":1,\n'
@@ -17,7 +16,7 @@ def parse_args():
         '-i',
         '--input',
         dest='input',
-        default=os.path.join('data', 'whitelist.pac'),
+        default=os.path.join('template', 'whitelist.pac'),
         help='path to gfwlist',
     )
     parser.add_argument(
@@ -48,59 +47,15 @@ def parse_args():
     return parser.parse_args()
 
 
-def writefile(input_file, proxy, output_file, rulesfile=None):
+def writetemplate(template, proxy, output_file, rulesfile=None):
 
     domains_content = final_list(rulesfile)
-    proxy_content = get_file_data(input_file)
+    proxy_content = get_file_data(template)
     proxy_content = proxy_content.replace('__PROXY__', proxy)
     proxy_content = proxy_content.replace('__DOMAINS__', domains_content)
 
     with open(output_file, 'w') as file_obj:
         file_obj.write(proxy_content)
-
-
-def reformat(f, fmt):
-    whitelist = []
-    for line in f:
-        l = re.findall(r'(?<==/).+?(?=/)', line)
-        if l:
-            whitelist.append(fmt.format(l[0]))
-    return whitelist
-
-
-def reformat_from_file(filename, fmt):
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            return reformat(f, fmt)
-    except IOError:
-        print('Unable to open local rule file, exiting...')
-        exit(1)
-
-
-def get_online_list(fmt):
-    print('Getting domain whitelist...')
-    dnsmasq_china_list = 'https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf'
-    try:
-        content = getList(dnsmasq_china_list)
-        content = content.decode('utf-8')
-        with open('whitelistCache', 'w', encoding='utf-8') as f:
-            f.write(content)
-    except:
-        print('Get list update failed,use cache to update instead.')
-
-    whitelist = reformat_from_file('whitelistCache', fmt)
-
-    return whitelist
-
-
-def getList(listUrl):
-    http = urllib3.PoolManager(
-        cert_reqs='CERT_REQUIRED',  # Force certificate check.
-        ca_certs=certifi.where(),  # Path to the Certifi bundle.
-    )
-
-    data = http.request('GET', listUrl, timeout=10).data
-    return data
 
 
 def final_list(rulesfile):
@@ -113,16 +68,9 @@ def final_list(rulesfile):
     return content
 
 
-def get_file_data(filename):
-    content = ''
-    with open(filename, 'r') as file_obj:
-        content = file_obj.read()
-    return content
-
-
 def main():
     args = parse_args()
-    writefile(
+    writetemplate(
         args.input,
         '"' + args.proxy.strip('"') + '"',
         args.output,

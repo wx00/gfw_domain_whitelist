@@ -58,3 +58,11 @@ docs/_build/
 *.tmp
 *.bak
 /.idea
+
+.vscode/
+
+# Project specific
+*.pac
+whitelistCache
+accelerated-domains.china.conf
+whitelist.txt

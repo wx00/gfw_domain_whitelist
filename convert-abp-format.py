@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from argparse import ArgumentParser
 
-from main import reformat, get_online_list
+from utils import reformat, get_online_list
 
 
 ABP_ALLOW_FMT = '||{}\n'
